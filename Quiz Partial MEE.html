@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examen Măsurări Electrice - Quiz Complet</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e9ecef;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        #quiz-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            width: 100%;
+            max-width: 700px;
+            position: relative;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #dee2e6;
+        }
+        .progress-text { font-weight: bold; color: #495057; }
+        .question-text {
+            font-size: 1.15em;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: #212529;
+            line-height: 1.5;
+        }
+        .options-list { list-style: none; padding: 0; }
+        .option-item {
+            margin-bottom: 12px;
+            padding: 15px;
+            border: 2px solid #ced4da;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+        .option-item:hover { border-color: #adb5bd; background-color: #f8f9fa; }
+        .option-item.selected { border-color: #007bff; background-color: #e7f1ff; }
+        .option-item.correct { border-color: #28a745 !important; background-color: #d4edda !important; color: #155724; font-weight: 500; }
+        .option-item.wrong { border-color: #dc3545 !important; background-color: #f8d7da !important; color: #721c24; }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            gap: 10px;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+        .btn-nav { background-color: #6c757d; color: white; }
+        .btn-check { background-color: #28a745; color: white; flex-grow: 1; }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+        
+        #feedback {
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+            min-height: 24px;
+        }
+
+        /* Stil pentru fereastra de final */
+        #result-modal {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: white;
+            border-radius: 15px;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            text-align: center;
+        }
+        #result-modal h2 { color: #2c3e50; font-size: 2em; margin-bottom: 10px; }
+        #result-score { font-size: 1.5em; margin-bottom: 20px; color: #007bff; }
+        .btn-restart { background-color: #007bff; color: white; padding: 15px 30px; }
+    </style>
+</head>
+<body>
+
+<div id="quiz-card">
+    <div id="result-modal">
+        <h2>Test Finalizat!</h2>
+        <div id="result-score"></div>
+        <button class="btn-restart" onclick="location.reload()">Reîncepe Testul</button>
+    </div>
+
+    <div class="header">
+        <span class="progress-text" id="progress">Se încarcă...</span>
+    </div>
+
+    <div id="question-area">
+        <div class="question-text" id="q-text"></div>
+        <div class="options-list" id="options-box"></div>
+    </div>
+
+    <div id="feedback"></div>
+
+    <div class="nav-buttons">
+        <button class="btn-nav" id="prev-btn" onclick="changeQuestion(-1)">Înapoi</button>
+        <button class="btn-check" id="check-btn" onclick="verifyAnswer()">Confirmă Răspuns</button>
+        <button class="btn-nav" id="next-btn" onclick="changeQuestion(1)">Înainte / Final</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        { q: "Se consideră un voltmetru cu D = 100 mV și Rv = 600 Ω. Determinați rezistența adițională pentru a măsura 12 V.", options: ["72 kΩ", "71.4 kΩ", "7.14 kΩ", "7.2 kΩ"], correct: [1] },
+        { q: "Se consideră un ampermetru cu D = 200 mA, Ra = 0,5 Ω. Rezistența de șunt pentru a măsura 1,2 A este:", options: ["0,1 Ω", "0,015 Ω", "1,5 Ω", "0,15 Ω"], correct: [0] },
+        { q: "Eroarea sistematică este caracterizată prin:", options: ["Rămâne constantă pentru un set de măsurători", "Este reproductibilă și poate fi corectată total", "Este detectabilă numai prin mijloace statistice", "Depinde de condițiile de măsurare"], correct: [0, 1, 3] },
+        { q: "Timpul de stabilire este timpul până când mărimea de ieșire se abate cu mai puțin de o valoare prescrisă față de regimul stabilit:", options: ["Adevărat", "Fals"], correct: [0] },
+        { q: "Unitatea de măsură pentru temperatură în Sistemul Internațional este:", options: ["Gradul Celsius", "Gradul Fahrenheit", "Gradul Kelvin", "Kelvinul"], correct: [3] },
+        { q: "Elementul Weston este:", options: ["Un etalon primar de tensiune", "Un etalon secundar de tensiune", "Un etalon primar de putere", "Un etalon secundar de putere"], correct: [1] },
+        { q: "Eroarea absolută maximă a unui aparat analogic depinde de:", options: ["Valoarea adevărată", "Clasa de precizie a aparatului", "Domeniul de măsură", "Valoarea măsurată"], correct: [1, 2] },
+        { q: "Divizorul de tensiune inductiv se poate folosi pentru:", options: ["Măsurări de audiofrecvență", "Măsurarea tensiunilor de zeci de kHz", "Măsurarea tensiunilor foarte înalte", "Măsurarea tensiunilor scăzute"], correct: [0, 1] },
+        { q: "Intervalul de măsurare este delimitat de:", options: ["Limita inferioară și limita superioară", "Limita inferioară și limita de supraîncărcare", "Limita inferioară și limita de siguranță", "Limita de supraîncărcare și limita de siguranță"], correct: [0] },
+        { q: "Etalonul atomic de cesiu:", options: ["Este un etalon primar", "Definește secunda", "Este un etalon secundar", "Definește lungimea de undă"], correct: [0, 1] },
+        { q: "Eroarea de histerezis a unui senzor:", options: ["Apare la măsurarea valorilor de urcare/coborâre", "Se manifestă la senzorii cu magnetizație remanentă", "Crește cu durata de folosire", "Este media valorilor de urcare/coborâre"], correct: [0, 1] },
+        { q: "Parametrii suficienți pentru regimul dinamic sunt:", options: ["Sensibilitatea", "Constanta de timp", "Frecvența", "Factorul de amortizare"], correct: [1, 3] },
+        { q: "Erorile grosolane sunt caracterizate prin:", options: ["Valori foarte mari, probabilitate mică", "Valori foarte mici, probabilitate mică", "Valori mari, probabilitate mare", "Valori medii, probabilitate mare"], correct: [0] },
+        { q: "Regimul normal de funcționare al transformatorului de tensiune este:", options: ["În scurtcircuit", "În gol", "Cu rezistor și condensator în secundar"], correct: [1] },
+        { q: "Rezistențele electrice se pot măsura prin metodele:", options: ["Directă", "Indirectă", "De comparație", "De punte"], correct: [0, 1, 2, 3] },
+        { q: "Convertorul A/D cu aproximații succesive conține:", options: ["Un convertor digital-analogic", "Un generator de rampă simplă", "Un generator de rampă dublă", "Un registru de deplasare"], correct: [0, 3] },
+        { q: "Ordinul unui mijloc de măsură este dat de:", options: ["Gradul ecuației diferențiale", "Gradul ecuației integrale", "Gradul ecuației mixte", "Gradul ecuației parametrice"], correct: [0] },
+        { q: "Eroarea totală la montajul amonte (măsurarea rezistențelor) depinde de:", options: ["Rezistența voltmetrului", "Rezistența ampermetrului", "Clasa voltmetrului", "Clasa ampermetrului"], correct: [1] },
+        { q: "Etalonul pentru tensiunea electrică:", options: ["Este etalon primar", "Este etalon secundar", "Nu face parte din mărimile de bază SI", "Face parte din mărimile de bază SI"], correct: [1, 3] },
+        { q: "Regimul de avarie al transformatorului de curent este:", options: ["Conectare condensator", "Funcționare cu secundarul în gol", "Funcționare în scurtcircuit"], correct: [1] },
+        { q: "Rezistența electrică se măsoară indirect cu:", options: ["Puntea de rezistențe", "Ampermetru și voltmetru", "Ohmmetru", "Ampermetru"], correct: [1] },
+        { q: "Eroarea de unghi a unui transformator de curent este:", options: ["Defazajul U-I în secundar", "Defazajul U-I în primar", "Defazajul între fazorii curentului din primar și secundar"], correct: [2] },
+        { q: "Elemente componente ale unui sistem de achiziție date:", options: ["Circuit de intrare", "Microprocesor", "Eșantionare și memorare", "Convertor A/D"], correct: [0, 1, 2, 3] },
+        { q: "Sensibilitatea unui aparat de măsură reprezintă:", options: ["Raportul dintre variația mărimii de ieșire și variația mărimii de intrare", "Cea mai mică valoare măsurabilă", "Capacitatea de a urmări variații rapide"], correct: [0] }
+    ];
+
+    let currentIdx = 0;
+    let selectedOptions = [];
+    let state = {}; 
+    let correctTotal = 0;
+
+    function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+    }
+
+    // Amestecăm întrebările și variantele
+    shuffle(questions);
+    questions.forEach(q => {
+        let indices = q.options.map((_, i) => i);
+        shuffle(indices);
+        let newOptions = indices.map(i => q.options[i]);
+        let newCorrect = [];
+        indices.forEach((oldIdx, newIdx) => {
+            if (q.correct.includes(oldIdx)) newCorrect.push(newIdx);
+        });
+        q.options = newOptions;
+        q.correct = newCorrect;
+    });
+
+    function displayQuestion() {
+        const qData = questions[currentIdx];
+        document.getElementById('q-text').innerText = qData.q;
+        document.getElementById('progress').innerText = `Întrebarea ${currentIdx + 1} din ${questions.length}`;
+        
+        const box = document.getElementById('options-box');
+        box.innerHTML = '';
+        document.getElementById('feedback').innerText = '';
+        
+        qData.options.forEach((text, i) => {
+            const div = document.createElement('div');
+            div.className = 'option-item';
+            div.innerText = text;
+            
+            if (state[currentIdx]) {
+                if (qData.correct.includes(i)) div.classList.add('correct');
+                else if (state[currentIdx].selected.includes(i)) div.classList.add('wrong');
+            } else {
+                div.onclick = () => {
+                    if (selectedOptions.includes(i)) {
+                        selectedOptions = selectedOptions.filter(x => x !== i);
+                        div.classList.remove('selected');
+                    } else {
+                        selectedOptions.push(i);
+                        div.classList.add('selected');
+                    }
+                };
+            }
+            box.appendChild(div);
+        });
+
+        document.getElementById('check-btn').style.display = state[currentIdx] ? 'none' : 'block';
+        document.getElementById('prev-btn').disabled = currentIdx === 0;
+        selectedOptions = [];
+    }
+
+    function verifyAnswer() {
+        if (selectedOptions.length === 0) return alert("Selectează un răspuns!");
+        
+        const qData = questions[currentIdx];
+        const items = document.querySelectorAll('.option-item');
+        
+        let correctCount = 0;
+        qData.correct.forEach(idx => { if(selectedOptions.includes(idx)) correctCount++; });
+        
+        const isPerfect = (correctCount === qData.correct.length && selectedOptions.length === qData.correct.length);
+        
+        state[currentIdx] = { 
+            selected: [...selectedOptions],
+            isCorrect: isPerfect
+        };
+
+        if(isPerfect) correctTotal++;
+
+        qData.options.forEach((_, i) => {
+            if (qData.correct.includes(i)) items[i].classList.add('correct');
+            else if (selectedOptions.includes(i)) items[i].classList.add('wrong');
+        });
+
+        const f = document.getElementById('feedback');
+        f.innerText = isPerfect ? "Corect! ✨" : "Incorect / Incomplet.";
+        f.style.color = isPerfect ? "#28a745" : "#dc3545";
+        document.getElementById('check-btn').style.display = 'none';
+    }
+
+    function changeQuestion(n) {
+        if (n === 1 && currentIdx === questions.length - 1) {
+            showFinalResults();
+            return;
+        }
+        currentIdx += n;
+        displayQuestion();
+    }
+
+    function showFinalResults() {
+        const modal = document.getElementById('result-modal');
+        const scoreDiv = document.getElementById('result-score');
+        modal.style.display = 'flex';
+        scoreDiv.innerText = `Ai obținut ${correctTotal} puncte din ${questions.length} posibile.`;
+    }
+
+    displayQuestion();
+</script>
+</body>
+</html>
